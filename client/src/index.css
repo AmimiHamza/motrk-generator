@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Tajawal", "Cairo", sans-serif;
+  background: radial-gradient(120% 90% at 80% 0%, #16243d 0%, rgba(22, 36, 61, 0) 55%),
+    linear-gradient(160deg, #0c1a2e 0%, #0a1628 60%, #081120 100%);
+  background-attachment: fixed;
+  color: #fff;
+}
+
+/* Inputs */
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #dfe5ee;
+}
+.field-input {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: rgba(13, 27, 42, 0.7);
+  border: 1px solid rgba(200, 168, 78, 0.35);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field-input::placeholder {
+  color: #6b7a90;
+}
+.field-input:focus {
+  border-color: #c8a84e;
+  box-shadow: 0 0 0 3px rgba(200, 168, 78, 0.18);
+}
+.field-input.invalid {
+  border-color: #e0586b;
+}
+
+.gold-text {
+  background: linear-gradient(180deg, #f0d078, #c8a84e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-gold {
+  background: linear-gradient(180deg, #f0d078, #c8a84e 75%, #9c7c2e);
+  color: #15233c;
+  font-weight: 800;
+  border: 1px solid #ffe9a8;
+  border-radius: 12px;
+  padding: 12px 22px;
+  cursor: pointer;
+  transition: transform 0.08s, filter 0.15s;
+}
+.btn-gold:hover {
+  filter: brightness(1.05);
+}
+.btn-gold:active {
+  transform: translateY(1px);
+}
+.btn-gold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: rgba(13, 27, 42, 0.7);
+  color: #fff;
+  border: 1px solid rgba(200, 168, 78, 0.4);
+  border-radius: 12px;
+  padding: 12px 22px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.btn-ghost:hover {
+  border-color: #c8a84e;
+}
+
+/* react-easy-crop container needs explicit size */
+.crop-area {
+  position: relative;
+  width: 100%;
+  background: #060d18;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(200, 168, 78, 0.4);
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+
+# generated render test artifacts
+server/test/sample-*.png
+server/test/preview.html
