@@ -15,7 +15,6 @@ const EMPTY_FORM = {
   fuel: "",
   color: "",
   price: "",
-  currency: "دينار بحريني",
   phone: "",
   tagline: "",
 };
@@ -51,7 +50,6 @@ export default function App() {
       fd.append("fuel", form.fuel);
       fd.append("color", form.color);
       fd.append("price", form.price);
-      fd.append("currency", form.currency);
       fd.append("phone", form.phone);
       fd.append("tagline", form.tagline || "");
       fd.append("crop_x", Math.round(crop?.x ?? 0));

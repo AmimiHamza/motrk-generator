@@ -55,8 +55,8 @@ TEXT = {
                     anchor="rm", arabic=True, max_width=470),
     "price": dict(x=190, y=838, font="taj-extra", size=52, color=GOLD,
                   anchor="mm", arabic=False, max_width=290),
-    "phone": dict(x=575, y=882, font="taj-bold", size=46, color=WHITE,
-                  anchor="mm", arabic=False, max_width=330),
+    "phone": dict(x=602, y=882, font="taj-bold", size=46, color="#15233c",
+                  anchor="mm", arabic=False, max_width=320),
 }
 
 # Car hole is read from the overlay's alpha bbox at runtime; this is only a fallback.

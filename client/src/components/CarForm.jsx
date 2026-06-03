@@ -2,8 +2,6 @@ import { useState } from "react";
 
 const FIELDS = [
   { name: "carNameEn", label: "اسم السيارة بالانجليزي", placeholder: "HYUNDAI SONATA", ltr: true },
-  { name: "year", label: "سنة الموديل (بالانجليزي)", placeholder: "2019", ltr: true },
-  { name: "model", label: "الموديل", placeholder: "2011" },
   { name: "brand", label: "الماركة", placeholder: "هونداي" },
   { name: "category", label: "الفئة / النسخة", placeholder: "سوناتا" },
   { name: "engine", label: "المحرك", placeholder: "4 سلندر" },
@@ -14,20 +12,14 @@ const FIELDS = [
   { name: "phone", label: "رقم صاحب السيارة", placeholder: "37777840", ltr: true },
 ];
 
-const CURRENCIES = [
-  "دينار بحريني",
-  "ريال سعودي",
-  "درهم اماراتي",
-  "ريال قطري",
-  "دينار كويتي",
-  "ريال عماني",
-];
+// Model years, newest first (1960–2026).
+const YEARS = Array.from({ length: 2026 - 1960 + 1 }, (_, i) => 2026 - i);
 
 export default function CarForm({ initial, onSubmit }) {
   const [values, setValues] = useState(initial);
   const [touched, setTouched] = useState({});
 
-  const required = FIELDS.map((f) => f.name).concat("currency");
+  const required = FIELDS.map((f) => f.name).concat("year", "model");
 
   function set(name, v) {
     setValues((prev) => ({ ...prev, [name]: v }));
@@ -56,8 +48,76 @@ export default function CarForm({ initial, onSubmit }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {FIELDS.map((f) => (
-          <div key={f.name} className={f.name === "carNameEn" ? "sm:col-span-2" : ""}>
+        {/* Car name — full width */}
+        <div className="sm:col-span-2">
+          <label className="field-label" htmlFor="carNameEn">
+            {FIELDS[0].label} <span className="text-gold">*</span>
+          </label>
+          <input
+            id="carNameEn"
+            name="carNameEn"
+            type="text"
+            dir="ltr"
+            className={"field-input " + (isInvalid("carNameEn") ? "invalid" : "")}
+            placeholder={FIELDS[0].placeholder}
+            value={values.carNameEn || ""}
+            onChange={(e) => set("carNameEn", e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, carNameEn: true }))}
+          />
+        </div>
+
+        {/* Model year — dropdown 1960..2026 */}
+        <div>
+          <label className="field-label" htmlFor="year">
+            سنة الموديل <span className="text-gold">*</span>
+          </label>
+          <select
+            id="year"
+            name="year"
+            dir="ltr"
+            className={"field-input " + (isInvalid("year") ? "invalid" : "")}
+            value={values.year || ""}
+            onChange={(e) => set("year", e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, year: true }))}
+          >
+            <option value="" disabled>
+              اختر السنة
+            </option>
+            {YEARS.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* الموديل — dropdown 1960..2026 */}
+        <div>
+          <label className="field-label" htmlFor="model">
+            الموديل <span className="text-gold">*</span>
+          </label>
+          <select
+            id="model"
+            name="model"
+            dir="ltr"
+            className={"field-input " + (isInvalid("model") ? "invalid" : "")}
+            value={values.model || ""}
+            onChange={(e) => set("model", e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, model: true }))}
+          >
+            <option value="" disabled>
+              اختر الموديل
+            </option>
+            {YEARS.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {FIELDS.slice(1).map((f) => (
+          <div key={f.name}>
             <label className="field-label" htmlFor={f.name}>
               {f.label} <span className="text-gold">*</span>
             </label>
@@ -74,25 +134,6 @@ export default function CarForm({ initial, onSubmit }) {
             />
           </div>
         ))}
-
-        <div>
-          <label className="field-label" htmlFor="currency">
-            العملة <span className="text-gold">*</span>
-          </label>
-          <select
-            id="currency"
-            name="currency"
-            className={"field-input " + (isInvalid("currency") ? "invalid" : "")}
-            value={values.currency || ""}
-            onChange={(e) => set("currency", e.target.value)}
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
 
         <div className="sm:col-span-2">
           <label className="field-label" htmlFor="tagline">
