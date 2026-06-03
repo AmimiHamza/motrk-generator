@@ -1,14 +1,15 @@
 import { useCallback, useState } from "react";
 import Cropper from "react-easy-crop";
-import getCroppedImg from "../lib/cropImage.js";
 
+// Horizontal aspect matches the template's car hole (792x485 ≈ 1.633).
 const ASPECTS = {
-  horizontal: 16 / 10,
+  horizontal: 792 / 485,
   square: 1,
 };
 
 export default function ImageCropper({ initialMode, onBack, onGenerate, generating }) {
   const [imageSrc, setImageSrc] = useState(null);
+  const [file, setFile] = useState(null);
   const [mode, setMode] = useState(initialMode || "horizontal");
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -19,21 +20,22 @@ export default function ImageCropper({ initialMode, onBack, onGenerate, generati
   }, []);
 
   function onFile(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
     const reader = new FileReader();
     reader.onload = () => {
       setImageSrc(reader.result);
       setCrop({ x: 0, y: 0 });
       setZoom(1);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(f);
   }
 
-  async function handleGenerate() {
-    if (!imageSrc || !pixels) return;
-    const cropped = await getCroppedImg(imageSrc, pixels);
-    onGenerate({ carImage: cropped, cropMode: mode });
+  function handleGenerate() {
+    if (!file || !pixels) return;
+    // Send the ORIGINAL file plus the crop rectangle in source-image pixels.
+    onGenerate({ file, crop: pixels, cropMode: mode });
   }
 
   return (
@@ -115,7 +117,7 @@ export default function ImageCropper({ initialMode, onBack, onGenerate, generati
         <button
           onClick={handleGenerate}
           className="btn-gold px-10 text-lg"
-          disabled={!imageSrc || !pixels || generating}
+          disabled={!file || !pixels || generating}
         >
           {generating ? "...جاري الإنشاء" : "إنشاء الصورة"}
         </button>

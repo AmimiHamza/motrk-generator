@@ -33,19 +33,37 @@ export default function App() {
     setStep(2);
   }
 
-  async function handleGenerate({ carImage, cropMode: mode }) {
+  async function handleGenerate({ file, crop, cropMode: mode }) {
     setCropMode(mode);
     setGenerating(true);
     setError(null);
     try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, carImage, cropMode: mode }),
-      });
+      const fd = new FormData();
+      fd.append("image", file);
+      // map camelCase form -> snake_case API fields
+      fd.append("car_name_en", form.carNameEn);
+      fd.append("year", form.year);
+      fd.append("model", form.model);
+      fd.append("brand", form.brand);
+      fd.append("category", form.category);
+      fd.append("engine", form.engine);
+      fd.append("transmission", form.transmission);
+      fd.append("fuel", form.fuel);
+      fd.append("color", form.color);
+      fd.append("price", form.price);
+      fd.append("currency", form.currency);
+      fd.append("phone", form.phone);
+      fd.append("tagline", form.tagline || "");
+      fd.append("crop_x", Math.round(crop?.x ?? 0));
+      fd.append("crop_y", Math.round(crop?.y ?? 0));
+      fd.append("crop_width", Math.round(crop?.width ?? 0));
+      fd.append("crop_height", Math.round(crop?.height ?? 0));
+      fd.append("crop_mode", mode);
+
+      const res = await fetch("/api/generate", { method: "POST", body: fd });
       if (!res.ok) {
         const msg = await res.json().catch(() => ({}));
-        throw new Error(msg.error || `خطأ ${res.status}`);
+        throw new Error(msg.detail || `خطأ ${res.status}`);
       }
       const blob = await res.blob();
       if (resultUrl) URL.revokeObjectURL(resultUrl);

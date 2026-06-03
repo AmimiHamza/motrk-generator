@@ -4,6 +4,13 @@ dist/
 *.log
 .DS_Store
 
-# generated render test artifacts
-server/test/sample-*.png
-server/test/preview.html
+# Python
+server/.venv/
+__pycache__/
+*.pyc
+
+# generated / test artifacts
+server/calib*.png
+server/_*.png
+server/test/*.png
+server/test/*.jpg

@@ -1,69 +1,110 @@
-# MOTRK cars4sale — Car Listing Image Generator
+# MOTRK cars4sale — Car Listing Image Generator (layer-based)
 
-Generates branded 1080×1080 Instagram listing images for the **MOTRK cars4sale**
-dealership (Bahrain). Fill a car form, upload + crop a photo, and download a
-polished gold-on-navy listing card.
+Generates branded **1080×1080** Instagram listing images for the **MOTRK cars4sale**
+dealership (Bahrain), by compositing three layers onto the *actual* template:
+
+```
+Layer 1 (bottom)  Car photo  — cropped by the user, placed in the template's car hole
+Layer 2 (middle)  Template overlay PNG — the real design with the car area cut out
+                  (logo, gold frame, specs labels + icons, price box, footer … all static)
+Layer 3 (top)     Dynamic text — name, year, tagline, spec values, price, phone
+```
+
+Because layer 2 is the real artwork (not an HTML re-creation), the result is
+pixel-accurate — the gold diagonal cut over the car, borders, and icons all come
+straight from the template.
 
 ## Stack
 
 - **client/** — React (Vite) + Tailwind, RTL Arabic UI, `react-easy-crop`
-- **server/** — Express + Puppeteer; renders an HTML/CSS template to PNG
+- **server/** — Python **FastAPI** + **Pillow**; Arabic shaped with
+  `arabic-reshaper` + `python-bidi`
 
 ## Quick start
 
 ```bash
-cd motrk-generator
-npm install                # root (concurrently)
-npm --prefix server install   # installs Puppeteer + downloads Chromium
-npm --prefix client install
-npm run dev                # runs server (3001) + client (5173) together
+# 1) Backend (Python 3.10+)
+cd motrk-generator/server
+py -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python make_overlay.py        # builds assets/template_overlay.png
+
+# 2) Frontend
+cd ../client
+npm install
+
+# 3) Run both (from motrk-generator/)
+cd ..
+npm install        # root: concurrently
+npm run dev        # FastAPI :8000  +  Vite :5173
 ```
 
-Then open http://localhost:5173
+Open http://localhost:5173 . Vite proxies `/api` → `http://localhost:8000`.
 
-> First `server install` downloads a Chromium build for Puppeteer (~150 MB).
-
-### Run separately
-
+Run separately if you prefer:
 ```bash
-npm run dev:server   # http://localhost:3001
-npm run dev:client   # http://localhost:5173  (proxies /api -> 3001)
+npm run dev:server   # uvicorn :8000 (with --reload)
+npm run dev:client   # vite :5173
 ```
 
 ## How it works
 
-1. **Step 1 — Form:** Arabic RTL form collects car specs, price, phone, optional tagline.
-2. **Step 2 — Crop:** Upload a photo, pick **مستطيل (horizontal)** or **مربع (square)**,
-   pan/zoom with `react-easy-crop`.
-3. **Step 3 — Preview:** Frontend POSTs form data + cropped base64 image to
-   `POST /api/generate`. The server injects values into
-   [server/src/templates/render.js](server/src/templates/render.js), renders with
-   Puppeteer at `deviceScaleFactor: 2`, and returns a crisp 1080×1080 PNG.
+1. **Form (step 1)** — Arabic RTL form collects specs, price, phone, optional tagline.
+2. **Crop (step 2)** — upload a photo, pick **مستطيل (horizontal)** or **مربع (square)**,
+   pan/zoom with `react-easy-crop`. Horizontal aspect matches the car hole (≈1.63:1).
+3. **Generate (step 3)** — the frontend POSTs `multipart/form-data` to
+   `POST /api/generate`: the **original** image file + the crop rectangle
+   (`crop_x/y/width/height`, in source pixels) + all text fields. The server crops,
+   cover-fits the photo into the hole, lays the overlay on top, draws the text, and
+   returns a 1080×1080 PNG.
 
-## Swapping the logo
+### API
 
-The logo is a placeholder SVG in
-[server/src/assets/logo.js](server/src/assets/logo.js). Replace `logoSvg` with the
-client's real PNG, e.g.:
+```
+POST /api/generate   (multipart/form-data)
+  image: file
+  car_name_en, year, model, brand, category, engine, transmission,
+  fuel, color, price, currency, phone, tagline
+  crop_x, crop_y, crop_width, crop_height, crop_mode
+  -> image/png (1080x1080)
 
-```js
-export const logoSvg = `<img src="data:image/png;base64,..." style="width:100%;height:100%"/>`;
+GET  /api/test?grid=1   calibration render with dummy data (+ coordinate grid)
+GET  /api/health        { ok, hole:[x,y,w,h] }
 ```
 
-## Static / hardcoded elements
+## Calibrating text positions
 
-- Bottom footer bar (Instagram / WhatsApp / location) — always identical.
-- Specs panel footer note — always present.
-- "للبيع" badge, "المواصفات" header.
+All coordinates live in [server/config.py](server/config.py) (`TEXT`, `SPEC_ROWS`,
+`SPEC_VALUE_*`). To re-tune:
 
-## Notes
+```bash
+cd server
+.venv\Scripts\python calib.py        # writes calib.png (dummy data over a checker)
+.venv\Scripts\python calib.py grid   # writes calib_grid.png with a 60px grid + markers
+```
+Open the image, nudge the numbers in `config.py`, repeat. Or hit `GET /api/test?grid=1`.
 
-- Fonts (Cairo / Tajawal / Montserrat) load from Google Fonts; Puppeteer waits for
-  `document.fonts.ready` before screenshotting. For fully offline rendering, download
-  the font files and `@font-face` them locally in the template.
-- Square mode uses a 1:1 crop and a slightly narrower specs column.
+## Template assets
+
+- `assets/source_template.png` — the raw 2000×2000 template (car area is a solid
+  `#282828` fill). Provided by the client.
+- `assets/template_overlay.png` — generated by `make_overlay.py`: the car fill is
+  detected (largest connected `#282828` region) and made transparent; everything else
+  stays. Re-run `npm run overlay` if the source template changes.
+- `assets/fonts/` — Tajawal (Arabic) + Montserrat variable (English).
+
+### Note on the baked currency
+This template **bakes "دينار بحريني"** into the price box, so only the price *number*
+is drawn dynamically. The currency dropdown is kept in the UI, but to support other
+currencies the client must supply a template without the baked currency text.
+
+### Arabic rendering note
+Pillow here has no raqm/HarfBuzz, so text is shaped with `arabic-reshaper` +
+`python-bidi`. Modern fonts (Tajawal) don't map every Presentation-Forms-B codepoint
+(e.g. isolated alef/yeh), so [text_renderer.py](server/text_renderer.py) remaps any
+glyph the font lacks back to its base letter (visually identical).
 
 ## Phase 2 ideas
-
 Background removal (rembg / Remove.bg), batch processing, WhatsApp bot, multiple
-templates, client admin panel.
+templates, client admin panel, a second `template_square.png` overlay for a true
+square-photo layout.

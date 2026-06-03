@@ -1,14 +1,14 @@
 {
   "name": "motrk-generator",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "MOTRK cars4sale — car listing image generator",
+  "description": "MOTRK cars4sale — layer-based car listing image generator",
   "scripts": {
-    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
-    "dev": "concurrently -n server,client -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
-    "dev:server": "npm --prefix server run dev",
-    "dev:client": "npm --prefix client run dev",
-    "build": "npm --prefix client run build"
+    "dev": "concurrently -n api,web -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "cd server && .venv\\Scripts\\python -m uvicorn main:app --reload --port 8000",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "overlay": "cd server && .venv\\Scripts\\python make_overlay.py"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
