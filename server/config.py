@@ -59,6 +59,21 @@ TEXT = {
                   anchor="mm", arabic=False, max_width=320),
 }
 
+# Price box: when no price is entered, show this placeholder instead of a number.
+# It is longer than a price, so it auto-fits to a smaller size (see PRICE_DEFAULT_*).
+PRICE_DEFAULT_TEXT = "السعر بعد المعاينة"
+PRICE_DEFAULT_FONT = "taj-bold"
+PRICE_DEFAULT_SIZE = 40
+PRICE_DEFAULT_MAX_W = 230
+
+# Currency line inside the price box. The template has "دينار بحريني" baked in,
+# so we paint CURRENCY_COVER with the box background to erase it, then draw the
+# chosen currency dynamically — and skip it entirely when the price is empty.
+PRICE_BOX_BG = (7, 23, 36)
+CURRENCY_COVER = (100, 850, 262, 886)  # (x0, y0, x1, y1) interior rect over baked text
+CURRENCY = dict(x=178, y=867, font="taj-bold", size=30, color=WHITE,
+                anchor="mm", arabic=True, max_width=230)
+
 # Car hole is read from the overlay's alpha bbox at runtime; this is only a fallback.
 CAR_AREA_FALLBACK = dict(x=0, y=294, width=793, height=487)
 

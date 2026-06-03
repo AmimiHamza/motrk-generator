@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1780485125583",
+    "created_at": "2026-06-03T11:12:05Z",
+    "car_name_en": "hamza",
+    "year": "2025",
+    "model": "2025",
+    "brand": "hamza",
+    "category": "hamza",
+    "engine": "hamza",
+    "transmission": "dza",
+    "fuel": "hamza",
+    "color": "hamza",
+    "price": "4811",
+    "currency": "دينار بحريني",
+    "phone": "0643626334",
+    "tagline": "yes",
+    "crop_mode": "horizontal",
+    "image_path": "data/listings/1780485125583.png",
+    "thumb_path": "data/listings/1780485125583_thumb.jpg"
+  }
+]

@@ -1,151 +1,430 @@
 import { useState } from "react";
 
-const FIELDS = [
-  { name: "carNameEn", label: "اسم السيارة بالانجليزي", placeholder: "HYUNDAI SONATA", ltr: true },
-  { name: "brand", label: "الماركة", placeholder: "هونداي" },
-  { name: "category", label: "الفئة / النسخة", placeholder: "سوناتا" },
-  { name: "engine", label: "المحرك", placeholder: "4 سلندر" },
-  { name: "transmission", label: "ناقل الحركة", placeholder: "اوتوماتيك" },
-  { name: "fuel", label: "نوع الوقود", placeholder: "بترول" },
-  { name: "color", label: "اللون", placeholder: "اسود" },
-  { name: "price", label: "السعر", placeholder: "6,700", ltr: true },
-  { name: "phone", label: "رقم صاحب السيارة", placeholder: "37777840", ltr: true },
+const OTHER = "أخرى";
+
+// Model years, newest first: 2030 down to 1960.
+const YEARS = Array.from({ length: 2030 - 1960 + 1 }, (_, i) => 2030 - i);
+const DEFAULT_YEAR = "2026";
+
+const BRANDS = [
+  "تويوتا", "هونداي", "نيسان", "بي إم دبليو", "مرسيدس", "كيا", "شيفروليه",
+  "هوندا", "ميتسوبيشي", "لكزس", "فورد", "مازدا", "سوزوكي", "فولكس واجن",
+  "أودي", "بورشه", "جيب", "لاند روفر", "جاغوار", "بنتلي", "رولز رويس",
+  "فيراري", "لامبورغيني", OTHER,
 ];
 
-// Model years, newest first (1960–2026).
-const YEARS = Array.from({ length: 2026 - 1960 + 1 }, (_, i) => 2026 - i);
+// Categories / trims per brand.
+const CATEGORIES = {
+  "تويوتا": ["يارس", "كورولا", "كامري", "لاند كروزر", "برادو", "هايلكس", "فورتشنر", "أفالون", "راف فور", "سيكويا", "تاندرا", "C-HR", "راش", "إنوفا", "كراون"],
+  "هونداي": ["سوناتا", "توسان", "إلنترا", "أكسنت", "سانتافي", "كريتا", "باليسيد", "فينيو", "كونا", "i10", "i20", "i30", "ستاريا"],
+  "نيسان": ["ألتيما", "باترول", "صني", "سنترا", "إكس تريل", "كيكس", "جوك", "مكسيما", "نافارا", "باثفايندر"],
+  "بي إم دبليو": ["سيريا 1", "سيريا 2", "سيريا 3", "سيريا 4", "سيريا 5", "سيريا 6", "سيريا 7", "سيريا 8", "X1", "X2", "X3", "X4", "X5", "X6", "X7"],
+  "مرسيدس": ["A كلاس", "C كلاس", "E كلاس", "S كلاس", "GLA", "GLB", "GLC", "GLE", "GLS", "G كلاس", "CLA", "CLS", "AMG GT"],
+  "كيا": ["سبورتاج", "سيراتو", "K5", "سورينتو", "سيلتوس", "بيكانتو", "ستينجر", "كرنفال", "EV6", "نيرو"],
+  "شيفروليه": ["ماليبو", "كابتيفا", "تاهو", "سوبربان", "سلفرادو", "تريل بليزر", "إكوينوكس", "كمارو", "كورفيت", "سبارك"],
+  "هوندا": ["سيفيك", "أكورد", "CR-V", "HR-V", "بايلوت", "سيتي", "جاز", "أوديسي"],
+  "ميتسوبيشي": ["لانسر", "باجيرو", "أوتلاندر", "ASX", "L200", "أتراج", "إكليبس كروس", "مونتيرو"],
+  "لكزس": ["IS", "ES", "LS", "NX", "RX", "GX", "LX", "UX", "LC", "RC"],
+  "فورد": ["فيوجن", "إكسبلورر", "إكسبيديشن", "رينجر", "فوكس", "إيدج", "برونكو", "F-150", "موستانج", "إسكيب"],
+  "مازدا": ["مازدا 3", "مازدا 6", "CX-3", "CX-5", "CX-9", "CX-30", "MX-5"],
+  "سوزوكي": ["سويفت", "فيتارا", "جيمني", "إرتيجا", "بالينو", "سياز", "ديزاير"],
+  "فولكس واجن": ["جولف", "باسات", "تيغوان", "توارق", "جيتا", "أطلس", "بولو", "ID.4"],
+  "أودي": ["A3", "A4", "A5", "A6", "A7", "A8", "Q2", "Q3", "Q5", "Q7", "Q8", "e-tron", "RS"],
+  "بورشه": ["كايين", "ماكان", "باناميرا", "911", "تايكان", "بوكستر", "كايمان"],
+  "جيب": ["رانجلر", "جراند شيروكي", "شيروكي", "كومباس", "رينيجيد", "جلادياتور"],
+  "لاند روفر": ["رينج روفر", "رينج روفر سبورت", "ديفندر", "ديسكفري", "إيفوك", "فيلار"],
+  "جاغوار": ["XE", "XF", "XJ", "F-PACE", "E-PACE", "F-TYPE"],
+  "بنتلي": ["كونتيننتال", "فلاينج سبير", "بينتايغا"],
+  "رولز رويس": ["فانتوم", "غوست", "ريث", "كولينان", "داون"],
+  "فيراري": ["488", "F8", "SF90", "روما", "بورتوفينو", "296"],
+  "لامبورغيني": ["أوروس", "هوراكان", "أفنتادور", "ريفويلتو"],
+};
+
+const ENGINES = ["4 سلندر", "6 سلندر", "8 سلندر", "12 سلندر", "كهربائية"];
+const FUELS = ["بترول", "ديزل", "كهرباء", "هايبرد"];
+const TRANSMISSIONS = ["أوتوماتيك", "عادي"];
+const COLORS = ["أبيض", "أسود", "فضي", "رمادي", "أحمر", "أزرق", "أخضر", "أصفر", "برتقالي", "بني", "بيج", "ذهبي", OTHER];
+const CURRENCIES = ["دينار بحريني", "ريال سعودي", "درهم إماراتي", "دينار كويتي", "ريال عماني", "ريال قطري", "دولار أمريكي"];
+const DEFAULT_CURRENCY = "دينار بحريني";
+
+// Rebuild the raw editing state (dropdown choice + custom text) from a possibly
+// resolved `initial` value so the form repopulates correctly on back-navigation.
+function buildState(initial = {}) {
+  const brandKnown = BRANDS.includes(initial.brand);
+  const brand = initial.brand ? (brandKnown ? initial.brand : OTHER) : "";
+  const brandOther = brandKnown ? "" : initial.brand || "";
+
+  const catList = CATEGORIES[brand] || [];
+  const catKnown = catList.includes(initial.category);
+  const isBrandOther = brand === OTHER;
+  const category = initial.category ? (isBrandOther || !catKnown ? "" : initial.category) : "";
+  const categoryOther = isBrandOther || (initial.category && !catKnown) ? initial.category || "" : "";
+
+  const colorKnown = COLORS.includes(initial.color);
+  const color = initial.color ? (colorKnown ? initial.color : OTHER) : "";
+  const colorOther = colorKnown ? "" : initial.color || "";
+
+  return {
+    carNameEn: initial.carNameEn || "",
+    year: initial.year || DEFAULT_YEAR,
+    brand,
+    brandOther,
+    category,
+    categoryOther,
+    engine: initial.engine || "",
+    fuel: initial.fuel || "",
+    transmission: initial.transmission || "",
+    color,
+    colorOther,
+    price: initial.price || "",
+    currency: initial.currency || DEFAULT_CURRENCY,
+    phone: initial.phone || "",
+    tagline: initial.tagline || "",
+  };
+}
 
 export default function CarForm({ initial, onSubmit }) {
-  const [values, setValues] = useState(initial);
+  const [v, setV] = useState(() => buildState(initial));
   const [touched, setTouched] = useState({});
 
-  const required = FIELDS.map((f) => f.name).concat("year", "model");
+  const isBrandOther = v.brand === OTHER;
+  const isColorOther = v.color === OTHER;
+  const hasPrice = String(v.price || "").trim() !== "";
+  const catList = CATEGORIES[v.brand] || [];
 
-  function set(name, v) {
-    setValues((prev) => ({ ...prev, [name]: v }));
+  function set(name, value) {
+    setV((prev) => ({ ...prev, [name]: value }));
   }
 
-  function isInvalid(name) {
-    return touched[name] && !String(values[name] || "").trim();
+  function touch(name) {
+    setTouched((t) => ({ ...t, [name]: true }));
+  }
+
+  // Changing the brand resets the dependent category selection.
+  function setBrand(value) {
+    setV((prev) => ({ ...prev, brand: value, category: "", categoryOther: "" }));
+  }
+
+  // Field-level "is this required field empty" check.
+  function missing(name) {
+    switch (name) {
+      case "brand":
+        return isBrandOther ? !v.brandOther.trim() : !v.brand;
+      case "category":
+        return isBrandOther ? !v.categoryOther.trim() : !v.category;
+      case "color":
+        return isColorOther ? !v.colorOther.trim() : !v.color;
+      default:
+        return !String(v[name] || "").trim();
+    }
+  }
+
+  const REQUIRED = ["carNameEn", "year", "brand", "category", "engine", "fuel", "transmission", "color", "phone"];
+
+  function invalid(name) {
+    return touched[name] && missing(name);
   }
 
   function handleSubmit(e) {
     e.preventDefault();
     const allTouched = {};
-    required.forEach((n) => (allTouched[n] = true));
+    REQUIRED.forEach((n) => (allTouched[n] = true));
     setTouched(allTouched);
 
-    const missing = required.filter((n) => !String(values[n] || "").trim());
-    if (missing.length) {
-      const el = document.querySelector(`[name="${missing[0]}"]`);
+    const firstMissing = REQUIRED.find(missing);
+    if (firstMissing) {
+      const el = document.querySelector(`[data-field="${firstMissing}"]`);
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
       el?.focus();
       return;
     }
-    onSubmit(values);
+
+    onSubmit({
+      carNameEn: v.carNameEn.trim(),
+      year: v.year,
+      model: v.year, // single model-year feeds both the photo year and المواصفات row
+      brand: isBrandOther ? v.brandOther.trim() : v.brand,
+      category: isBrandOther ? v.categoryOther.trim() : v.category,
+      engine: v.engine,
+      fuel: v.fuel,
+      transmission: v.transmission,
+      color: isColorOther ? v.colorOther.trim() : v.color,
+      price: v.price.trim(),
+      currency: hasPrice ? v.currency : "",
+      phone: v.phone.trim(),
+      tagline: v.tagline.trim(),
+    });
   }
 
+  const errMsg = "هذا الحقل مطلوب";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Car name — full width */}
-        <div className="sm:col-span-2">
+        {/* 1 — Car name (English, auto-uppercase) — full width */}
+        <div className="sm:col-span-2" data-field="carNameEn">
           <label className="field-label" htmlFor="carNameEn">
-            {FIELDS[0].label} <span className="text-gold">*</span>
+            اسم السيارة بالإنجليزي <span className="text-gold">*</span>
           </label>
           <input
             id="carNameEn"
-            name="carNameEn"
             type="text"
             dir="ltr"
-            className={"field-input " + (isInvalid("carNameEn") ? "invalid" : "")}
-            placeholder={FIELDS[0].placeholder}
-            value={values.carNameEn || ""}
-            onChange={(e) => set("carNameEn", e.target.value)}
-            onBlur={() => setTouched((t) => ({ ...t, carNameEn: true }))}
+            style={{ textTransform: "uppercase" }}
+            className={"field-input " + (invalid("carNameEn") ? "invalid" : "")}
+            placeholder="TOYOTA YARIS"
+            value={v.carNameEn}
+            onChange={(e) => set("carNameEn", e.target.value.toUpperCase())}
+            onBlur={() => touch("carNameEn")}
           />
+          {invalid("carNameEn") && <p className="field-error">{errMsg}</p>}
         </div>
 
-        {/* Model year — dropdown 1960..2026 */}
-        <div>
+        {/* 2 — Model year */}
+        <div data-field="year">
           <label className="field-label" htmlFor="year">
             سنة الموديل <span className="text-gold">*</span>
           </label>
           <select
             id="year"
-            name="year"
             dir="ltr"
-            className={"field-input " + (isInvalid("year") ? "invalid" : "")}
-            value={values.year || ""}
+            className={"field-input " + (invalid("year") ? "invalid" : "")}
+            value={v.year}
             onChange={(e) => set("year", e.target.value)}
-            onBlur={() => setTouched((t) => ({ ...t, year: true }))}
+            onBlur={() => touch("year")}
           >
-            <option value="" disabled>
-              اختر السنة
-            </option>
             {YEARS.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
+              <option key={y} value={y}>{y}</option>
             ))}
           </select>
         </div>
 
-        {/* الموديل — dropdown 1960..2026 */}
-        <div>
-          <label className="field-label" htmlFor="model">
-            الموديل <span className="text-gold">*</span>
+        {/* 3 — Brand */}
+        <div data-field="brand">
+          <label className="field-label" htmlFor="brand">
+            الماركة <span className="text-gold">*</span>
           </label>
           <select
-            id="model"
-            name="model"
-            dir="ltr"
-            className={"field-input " + (isInvalid("model") ? "invalid" : "")}
-            value={values.model || ""}
-            onChange={(e) => set("model", e.target.value)}
-            onBlur={() => setTouched((t) => ({ ...t, model: true }))}
+            id="brand"
+            dir="rtl"
+            className={"field-input " + (invalid("brand") ? "invalid" : "")}
+            value={v.brand}
+            onChange={(e) => setBrand(e.target.value)}
+            onBlur={() => touch("brand")}
           >
-            <option value="" disabled>
-              اختر الموديل
-            </option>
-            {YEARS.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
+            <option value="" disabled>اختر الماركة</option>
+            {BRANDS.map((b) => (
+              <option key={b} value={b}>{b}</option>
             ))}
           </select>
+          {isBrandOther && (
+            <input
+              type="text"
+              dir="rtl"
+              className={"field-input fade-slide mt-2 " + (invalid("brand") ? "invalid" : "")}
+              placeholder="اكتب اسم الماركة"
+              value={v.brandOther}
+              onChange={(e) => set("brandOther", e.target.value)}
+              onBlur={() => touch("brand")}
+            />
+          )}
+          {invalid("brand") && <p className="field-error">{errMsg}</p>}
         </div>
 
-        {FIELDS.slice(1).map((f) => (
-          <div key={f.name}>
-            <label className="field-label" htmlFor={f.name}>
-              {f.label} <span className="text-gold">*</span>
-            </label>
+        {/* 4 — Category / trim (depends on brand) */}
+        <div data-field="category">
+          <label className="field-label" htmlFor="category">
+            الفئة / النسخة <span className="text-gold">*</span>
+          </label>
+          {isBrandOther ? (
             <input
-              id={f.name}
-              name={f.name}
+              id="category"
               type="text"
-              dir={f.ltr ? "ltr" : "rtl"}
-              className={"field-input " + (isInvalid(f.name) ? "invalid" : "")}
-              placeholder={f.placeholder}
-              value={values[f.name] || ""}
-              onChange={(e) => set(f.name, e.target.value)}
-              onBlur={() => setTouched((t) => ({ ...t, [f.name]: true }))}
+              dir="rtl"
+              className={"field-input " + (invalid("category") ? "invalid" : "")}
+              placeholder="اكتب اسم الفئة"
+              value={v.categoryOther}
+              onChange={(e) => set("categoryOther", e.target.value)}
+              onBlur={() => touch("category")}
             />
-          </div>
-        ))}
+          ) : (
+            <select
+              id="category"
+              dir="rtl"
+              disabled={!v.brand}
+              className={"field-input " + (invalid("category") ? "invalid" : "")}
+              value={v.category}
+              onChange={(e) => set("category", e.target.value)}
+              onBlur={() => touch("category")}
+            >
+              <option value="" disabled>
+                {v.brand ? "اختر الفئة" : "اختر الماركة أولاً"}
+              </option>
+              {catList.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          )}
+          {invalid("category") && <p className="field-error">{errMsg}</p>}
+        </div>
 
-        <div className="sm:col-span-2">
-          <label className="field-label" htmlFor="tagline">
-            وصف إضافي (اختياري)
+        {/* 5 — Engine */}
+        <div data-field="engine">
+          <label className="field-label" htmlFor="engine">
+            المحرك <span className="text-gold">*</span>
+          </label>
+          <select
+            id="engine"
+            dir="rtl"
+            className={"field-input " + (invalid("engine") ? "invalid" : "")}
+            value={v.engine}
+            onChange={(e) => set("engine", e.target.value)}
+            onBlur={() => touch("engine")}
+          >
+            <option value="" disabled>اختر المحرك</option>
+            {ENGINES.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+          {invalid("engine") && <p className="field-error">{errMsg}</p>}
+        </div>
+
+        {/* 6 — Fuel type */}
+        <div data-field="fuel">
+          <label className="field-label" htmlFor="fuel">
+            نوع الوقود <span className="text-gold">*</span>
+          </label>
+          <select
+            id="fuel"
+            dir="rtl"
+            className={"field-input " + (invalid("fuel") ? "invalid" : "")}
+            value={v.fuel}
+            onChange={(e) => set("fuel", e.target.value)}
+            onBlur={() => touch("fuel")}
+          >
+            <option value="" disabled>اختر نوع الوقود</option>
+            {FUELS.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+          {invalid("fuel") && <p className="field-error">{errMsg}</p>}
+        </div>
+
+        {/* 7 — Transmission */}
+        <div data-field="transmission">
+          <label className="field-label" htmlFor="transmission">
+            ناقل الحركة <span className="text-gold">*</span>
+          </label>
+          <select
+            id="transmission"
+            dir="rtl"
+            className={"field-input " + (invalid("transmission") ? "invalid" : "")}
+            value={v.transmission}
+            onChange={(e) => set("transmission", e.target.value)}
+            onBlur={() => touch("transmission")}
+          >
+            <option value="" disabled>اختر ناقل الحركة</option>
+            {TRANSMISSIONS.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+          {invalid("transmission") && <p className="field-error">{errMsg}</p>}
+        </div>
+
+        {/* 8 — Color */}
+        <div data-field="color">
+          <label className="field-label" htmlFor="color">
+            اللون <span className="text-gold">*</span>
+          </label>
+          <select
+            id="color"
+            dir="rtl"
+            className={"field-input " + (invalid("color") ? "invalid" : "")}
+            value={v.color}
+            onChange={(e) => set("color", e.target.value)}
+            onBlur={() => touch("color")}
+          >
+            <option value="" disabled>اختر اللون</option>
+            {COLORS.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+          {isColorOther && (
+            <input
+              type="text"
+              dir="rtl"
+              className={"field-input fade-slide mt-2 " + (invalid("color") ? "invalid" : "")}
+              placeholder="اكتب اللون"
+              value={v.colorOther}
+              onChange={(e) => set("colorOther", e.target.value)}
+              onBlur={() => touch("color")}
+            />
+          )}
+          {invalid("color") && <p className="field-error">{errMsg}</p>}
+        </div>
+
+        {/* 9 — Price (optional) */}
+        <div data-field="price">
+          <label className="field-label" htmlFor="price">السعر</label>
+          <input
+            id="price"
+            type="text"
+            inputMode="numeric"
+            dir="ltr"
+            className="field-input"
+            placeholder="مثال: 6,700"
+            value={v.price}
+            onChange={(e) => set("price", e.target.value)}
+          />
+        </div>
+
+        {/* 10 — Currency (only when a price is entered) */}
+        {hasPrice && (
+          <div className="fade-slide" data-field="currency">
+            <label className="field-label" htmlFor="currency">العملة</label>
+            <select
+              id="currency"
+              dir="rtl"
+              className="field-input"
+              value={v.currency}
+              onChange={(e) => set("currency", e.target.value)}
+            >
+              {CURRENCIES.map((o) => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* 11 — Owner phone */}
+        <div data-field="phone">
+          <label className="field-label" htmlFor="phone">
+            رقم صاحب السيارة <span className="text-gold">*</span>
           </label>
           <input
-            id="tagline"
-            name="tagline"
+            id="phone"
             type="text"
+            inputMode="tel"
+            dir="ltr"
+            className={"field-input " + (invalid("phone") ? "invalid" : "")}
+            placeholder="مثال: 37777840"
+            value={v.phone}
+            onChange={(e) => set("phone", e.target.value)}
+            onBlur={() => touch("phone")}
+          />
+          {invalid("phone") && <p className="field-error">{errMsg}</p>}
+        </div>
+
+        {/* 12 — Optional tagline — full width */}
+        <div className="sm:col-span-2" data-field="tagline">
+          <label className="field-label" htmlFor="tagline">وصف إضافي (اختياري)</label>
+          <input
+            id="tagline"
+            type="text"
+            dir="rtl"
             className="field-input"
-            placeholder="ريق الأساطير لا يندثر"
-            value={values.tagline || ""}
+            placeholder="مثال: ريق الأساطير لا يندثر"
+            value={v.tagline}
             onChange={(e) => set("tagline", e.target.value)}
           />
         </div>

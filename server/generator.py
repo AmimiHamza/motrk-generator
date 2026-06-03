@@ -68,14 +68,43 @@ def _apply_crop(img: Image.Image, crop: dict | None) -> Image.Image:
     return img.crop((x, y, x + w, y + h))
 
 
+def _draw_price_and_currency(draw: ImageDraw.ImageDraw, data: dict):
+    """Price + currency live in one box. The currency is baked into the template,
+    so erase it first, then render dynamically. With no price, show a longer
+    placeholder (auto-fit to a smaller size) and no currency."""
+    pcfg = config.TEXT["price"]
+    price = str(data.get("price", "") or "").strip()
+
+    # Erase the baked-in "دينار بحريني" so a different (or no) currency can show.
+    draw.rectangle(config.CURRENCY_COVER, fill=config.PRICE_BOX_BG)
+
+    if price:
+        draw_text(draw, price, x=pcfg["x"], y=pcfg["y"], font=pcfg["font"],
+                  size=pcfg["size"], color=pcfg["color"], anchor=pcfg["anchor"],
+                  arabic=pcfg["arabic"], max_width=pcfg.get("max_width"))
+        c = config.CURRENCY
+        draw_text(draw, data.get("currency", ""), x=c["x"], y=c["y"],
+                  font=c["font"], size=c["size"], color=c["color"],
+                  anchor=c["anchor"], arabic=c["arabic"], max_width=c["max_width"])
+    else:
+        draw_text(draw, config.PRICE_DEFAULT_TEXT, x=pcfg["x"], y=pcfg["y"],
+                  font=config.PRICE_DEFAULT_FONT, size=config.PRICE_DEFAULT_SIZE,
+                  color=pcfg["color"], anchor="mm", arabic=True,
+                  max_width=config.PRICE_DEFAULT_MAX_W)
+
+
 def _draw_all_text(canvas: Image.Image, data: dict):
     draw = ImageDraw.Draw(canvas)
 
     for key, cfg in config.TEXT.items():
+        if key == "price":
+            continue  # price + currency are handled together below
         draw_text(draw, data.get(key, ""), x=cfg["x"], y=cfg["y"],
                   font=cfg["font"], size=cfg["size"], color=cfg["color"],
                   anchor=cfg["anchor"], arabic=cfg["arabic"],
                   max_width=cfg.get("max_width"))
+
+    _draw_price_and_currency(draw, data)
 
     for spec_key, y in config.SPEC_ROWS.items():
         draw_text(draw, data.get(spec_key, ""), x=config.SPEC_VALUE_RIGHT_X, y=y,

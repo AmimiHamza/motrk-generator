@@ -51,6 +51,30 @@ body {
 .field-input.invalid {
   border-color: #e0586b;
 }
+.field-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.field-error {
+  margin-top: 5px;
+  font-size: 0.8rem;
+  color: #e0586b;
+}
+
+/* Smooth reveal for the "أخرى" custom inputs and the conditional currency field. */
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-slide {
+  animation: fadeSlide 0.2s ease-out;
+}
 
 .gold-text {
   background: linear-gradient(180deg, #f0d078, #c8a84e);
