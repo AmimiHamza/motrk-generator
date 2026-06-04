@@ -31,7 +31,7 @@ THEME_COLORS = {
         "year": GOLD,
         "tagline": WHITE,
         "spec_value": GOLD_VALUE,
-        "price": GOLD,
+        "price": WHITE,
         "currency": WHITE,
         "phone": DARK_TEXT,
     },
@@ -40,45 +40,51 @@ THEME_COLORS = {
         "year": DARK_TEXT,
         "tagline": DARK_TEXT,
         "spec_value": GOLD_VALUE,
-        "price": GOLD,
+        "price": WHITE,
         "currency": WHITE,
         "phone": DARK_TEXT,
     },
 }
 
-# Font keys -> (file, variable-weight-name or None)
+# Font keys -> (file, variable-weight-name or None).
+# Arabic = Tajawal; Latin (English/French letters + digits) = Assistant.
 FONTS = {
     "taj-regular": ("Tajawal-Regular.ttf", None),
+    "taj-medium": ("Tajawal-Medium.ttf", None),
     "taj-bold": ("Tajawal-Bold.ttf", None),
     "taj-extra": ("Tajawal-ExtraBold.ttf", None),
-    "mont-bold": ("Montserrat-VF.ttf", "Bold"),
-    "mont-extra": ("Montserrat-VF.ttf", "ExtraBold"),
+    "asst-bold": ("Assistant-Bold.ttf", None),
+    "asst-extra": ("Assistant-ExtraBold.ttf", None),
+    "asst-semibold": ("Assistant-SemiBold.ttf", None),
 }
 
-# Right edge that the specs values right-align to, and per-row vertical centers.
-# Labels (baked in the overlay) right-align at x~965; values sit ~33px below each.
-SPEC_VALUE_RIGHT_X = 962
 SPEC_VALUE_FONT = "taj-bold"
-SPEC_VALUE_SIZE = 24
-SPEC_VALUE_MAX_W = 185
+SPEC_VALUE_SIZE = 20       # default size; shrinks if a value is too wide
+SPEC_VALUE_MIN_SIZE = 16   # never smaller than this (then truncate with …)
+# The baked white labels are LEFT-aligned: every label's left edge sits at x~816
+# (their right edges vary only because the words differ in length). In RTL that
+# left edge is where each word "ends" (its last letter), so each gold value is
+# LEFT-aligned to the same line — value left edge under label left edge.
+SPEC_VALUE_LEFT_X = 816    # the shared vertical line (anchor "lm")
+SPEC_VALUE_RIGHT_BOUND = 911  # don't run into the icons; max width = bound - left
 
-# value vertical center per spec row (label_center + ~33)
+# value vertical center per spec row (left edge = SPEC_VALUE_LEFT_X, anchor "lm")
 SPEC_ROWS = {
-    "model": 394,
-    "brand": 458,
-    "category": 502,
-    "engine": 563,
-    "transmission": 620,
-    "fuel": 677,
-    "color": 741,
+    "model": 405,
+    "brand": 457,
+    "category": 510,
+    "engine": 568,
+    "transmission": 627,
+    "fuel": 688,
+    "color": 748,
 }
 
 # Single-element text fields.
 # Each: (x, y, font_key, size, color_key, anchor, arabic, max_width)
 TEXT = {
-    "car_name_en": dict(x=1030, y=112, font="mont-extra", size=56, color_key="car_name",
+    "car_name_en": dict(x=1030, y=112, font="asst-extra", size=58, color_key="car_name",
                         anchor="rm", arabic=False, max_width=560),
-    "year": dict(x=861, y=185, font="mont-extra", size=58, color_key="year",
+    "year": dict(x=861, y=185, font="asst-extra", size=60, color_key="year",
                  anchor="rm", arabic=False, max_width=180),
     "tagline": dict(x=1028, y=270, font="taj-bold", size=32, color_key="tagline",
                     anchor="rm", arabic=True, max_width=470),

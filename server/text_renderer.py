@@ -73,25 +73,44 @@ def shape_arabic(text: str, font_key: str) -> str:
     return get_display(reshaped)
 
 
-def _fit_font(draw, text, font_key, size, max_width):
+def _fit_size(draw, shaped, font_key, size, min_size, max_width):
+    """Largest size in [min_size, size] whose shaped text fits max_width."""
     size = int(size)
-    while size > 10:
-        font = get_font(font_key, size)
-        if draw.textlength(text, font=font) <= max_width:
-            return font
-        size -= 2
-    return get_font(font_key, size)
+    for s in range(size, int(min_size) - 1, -1):
+        if draw.textlength(shaped, font=get_font(font_key, s)) <= max_width:
+            return s
+    return int(min_size)
+
+
+def _truncate(draw, raw, font_key, font, max_width, arabic):
+    """Drop trailing (logical) characters + append … until it fits at min size.
+    For RTL text the dropped chars are on the visual left, where overflow occurs."""
+    def shaped(t):
+        return shape_arabic(t, font_key) if arabic else t
+
+    chars = list(str(raw))
+    while chars:
+        chars.pop()
+        cand = shaped("".join(chars).rstrip() + "…")
+        if draw.textlength(cand, font=font) <= max_width:
+            return cand
+    return shaped("…")
 
 
 def draw_text(draw, text, *, x, y, font, size, color, anchor="rm",
-              arabic=False, max_width=None):
+              arabic=False, max_width=None, min_size=12):
     if text is None or str(text).strip() == "":
         return
-    text = str(text)
-    if arabic:
-        text = shape_arabic(text, font)
+    raw = str(text)
+    shaped = shape_arabic(raw, font) if arabic else raw
+
     if max_width:
-        ft = _fit_font(draw, text, font, size, max_width)
+        s = _fit_size(draw, shaped, font, size, min_size, max_width)
+        ft = get_font(font, s)
+        # Even at the minimum size it may still be too wide -> truncate with …
+        if draw.textlength(shaped, font=ft) > max_width:
+            shaped = _truncate(draw, raw, font, ft, max_width, arabic)
     else:
         ft = get_font(font, size)
-    draw.text((x, y), text, font=ft, fill=color, anchor=anchor)
+
+    draw.text((x, y), shaped, font=ft, fill=color, anchor=anchor)

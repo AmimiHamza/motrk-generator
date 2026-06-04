@@ -73,6 +73,23 @@ def _apply_crop(img: Image.Image, crop: dict | None) -> Image.Image:
     return img.crop((x, y, x + w, y + h))
 
 
+def _format_price(value) -> str:
+    """Add thousands separators to a numeric price (35000 -> 35,000). Non-numeric
+    placeholders (e.g. 'بعد المعاينة') are returned unchanged."""
+    s = str(value or "").strip()
+    digits = s.replace(",", "").replace(" ", "")
+    return f"{int(digits):,}" if digits.isdigit() else s
+
+
+def _format_phone(value) -> str:
+    """Group the owner's phone digits in 4s with a space (38881234 -> 3888 1234)."""
+    s = str(value or "").strip()
+    digits = "".join(c for c in s if c.isdigit())
+    if len(digits) < 5:
+        return s
+    return " ".join(digits[i:i + 4] for i in range(0, len(digits), 4))
+
+
 def _draw_price_and_currency(draw: ImageDraw.ImageDraw, data: dict, colors: dict):
     """Price + currency live in one box. With no price, show a longer placeholder
     (auto-fit to a smaller size) and no currency line."""
@@ -98,6 +115,13 @@ def _draw_all_text(canvas: Image.Image, data: dict, theme: str):
     draw = ImageDraw.Draw(canvas)
     colors = config.THEME_COLORS[theme]
 
+    # Default formatting: thousands comma on price, 4-digit grouping on phone.
+    data = {
+        **data,
+        "price": _format_price(data.get("price", "")),
+        "phone": _format_phone(data.get("phone", "")),
+    }
+
     for key, cfg in config.TEXT.items():
         if key == "price":
             continue  # price + currency are handled together below
@@ -108,11 +132,13 @@ def _draw_all_text(canvas: Image.Image, data: dict, theme: str):
 
     _draw_price_and_currency(draw, data, colors)
 
-    for spec_key, y in config.SPEC_ROWS.items():
-        draw_text(draw, data.get(spec_key, ""), x=config.SPEC_VALUE_RIGHT_X, y=y,
+    lx = config.SPEC_VALUE_LEFT_X
+    spec_max_w = config.SPEC_VALUE_RIGHT_BOUND - lx
+    for spec_key, cy in config.SPEC_ROWS.items():
+        draw_text(draw, data.get(spec_key, ""), x=lx, y=cy,
                   font=config.SPEC_VALUE_FONT, size=config.SPEC_VALUE_SIZE,
-                  color=colors["spec_value"], anchor="rm", arabic=True,
-                  max_width=config.SPEC_VALUE_MAX_W)
+                  color=colors["spec_value"], anchor="lm", arabic=True,
+                  max_width=spec_max_w, min_size=config.SPEC_VALUE_MIN_SIZE)
 
 
 def _draw_calibration(canvas: Image.Image):
@@ -124,11 +150,11 @@ def _draw_calibration(canvas: Image.Image):
         draw.line([(0, v), (config.CANVAS, v)], fill=c, width=1)
         draw.text((v + 2, 2), str(v), fill=(255, 80, 80, 200))
         draw.text((2, v + 2), str(v), fill=(255, 80, 80, 200))
-    # mark spec value right edge + row centers
-    rx = config.SPEC_VALUE_RIGHT_X
-    for y in config.SPEC_ROWS.values():
-        draw.line([(rx - 250, y), (rx, y)], fill=(0, 255, 0, 160), width=1)
-        draw.ellipse([rx - 3, y - 3, rx + 3, y + 3], fill=(0, 255, 0, 220))
+    # mark the shared value left edge (anchor line) + max-width extent
+    lx = config.SPEC_VALUE_LEFT_X
+    for cy in config.SPEC_ROWS.values():
+        draw.line([(lx, cy), (config.SPEC_VALUE_RIGHT_BOUND, cy)], fill=(0, 255, 0, 160), width=1)
+        draw.ellipse([lx - 3, cy - 3, lx + 3, cy + 3], fill=(0, 255, 0, 220))
     for cfg in config.TEXT.values():
         x, y = cfg["x"], cfg["y"]
         draw.ellipse([x - 4, y - 4, x + 4, y + 4], outline=(0, 200, 255, 255), width=2)
