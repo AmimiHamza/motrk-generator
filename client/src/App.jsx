@@ -5,6 +5,7 @@ import ImageCropper from "./components/ImageCropper.jsx";
 import Preview from "./components/Preview.jsx";
 
 const EMPTY_FORM = {
+  theme: "dark",
   carNameEn: "",
   year: "",
   model: "",
@@ -54,6 +55,7 @@ export default function App() {
       fd.append("currency", form.currency || "");
       fd.append("phone", form.phone);
       fd.append("tagline", form.tagline || "");
+      fd.append("theme", form.theme || "dark");
       fd.append("crop_x", Math.round(crop?.x ?? 0));
       fd.append("crop_y", Math.round(crop?.y ?? 0));
       fd.append("crop_width", Math.round(crop?.width ?? 0));

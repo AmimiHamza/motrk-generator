@@ -8,37 +8,42 @@ from PIL import Image, ImageDraw
 import config
 from text_renderer import draw_text, get_font
 
-OVERLAY_PATH = Path(__file__).parent / "assets" / "template_overlay.png"
+ASSETS = Path(__file__).parent / "assets"
 
-_overlay = None
-_hole = None  # (x, y, w, h)
+# theme -> (overlay RGBA image, hole bbox (x, y, w, h)), cached after first load.
+_overlays: dict[str, tuple] = {}
 
 
-def _load_overlay():
-    global _overlay, _hole
-    if _overlay is not None:
-        return
-    if not OVERLAY_PATH.exists():
+def _load_overlay(theme: str = config.DEFAULT_THEME):
+    if theme not in config.THEME_COLORS:
+        theme = config.DEFAULT_THEME
+    if theme in _overlays:
+        return _overlays[theme]
+
+    path = ASSETS / f"template_{theme}.png"
+    if not path.exists():
         raise FileNotFoundError(
-            f"{OVERLAY_PATH} missing — run `python make_overlay.py` first."
+            f"{path} missing — run `python make_overlay.py` first."
         )
-    ov = Image.open(OVERLAY_PATH).convert("RGBA")
+    ov = Image.open(path).convert("RGBA")
     if ov.size != (config.CANVAS, config.CANVAS):
         ov = ov.resize((config.CANVAS, config.CANVAS), Image.LANCZOS)
-    _overlay = ov
+
     a = np.array(ov.split()[-1])
     ys, xs = np.where(a < 8)
     if len(xs):
-        _hole = (int(xs.min()), int(ys.min()),
-                 int(xs.max() - xs.min() + 1), int(ys.max() - ys.min() + 1))
+        hole = (int(xs.min()), int(ys.min()),
+                int(xs.max() - xs.min() + 1), int(ys.max() - ys.min() + 1))
     else:
         f = config.CAR_AREA_FALLBACK
-        _hole = (f["x"], f["y"], f["width"], f["height"])
+        hole = (f["x"], f["y"], f["width"], f["height"])
+
+    _overlays[theme] = (ov, hole)
+    return _overlays[theme]
 
 
-def get_hole():
-    _load_overlay()
-    return _hole
+def get_hole(theme: str = config.DEFAULT_THEME):
+    return _load_overlay(theme)[1]
 
 
 def _cover_resize(img: Image.Image, w: int, h: int) -> Image.Image:
@@ -68,48 +73,45 @@ def _apply_crop(img: Image.Image, crop: dict | None) -> Image.Image:
     return img.crop((x, y, x + w, y + h))
 
 
-def _draw_price_and_currency(draw: ImageDraw.ImageDraw, data: dict):
-    """Price + currency live in one box. The currency is baked into the template,
-    so erase it first, then render dynamically. With no price, show a longer
-    placeholder (auto-fit to a smaller size) and no currency."""
+def _draw_price_and_currency(draw: ImageDraw.ImageDraw, data: dict, colors: dict):
+    """Price + currency live in one box. With no price, show a longer placeholder
+    (auto-fit to a smaller size) and no currency line."""
     pcfg = config.TEXT["price"]
     price = str(data.get("price", "") or "").strip()
 
-    # Erase the baked-in "دينار بحريني" so a different (or no) currency can show.
-    draw.rectangle(config.CURRENCY_COVER, fill=config.PRICE_BOX_BG)
-
     if price:
         draw_text(draw, price, x=pcfg["x"], y=pcfg["y"], font=pcfg["font"],
-                  size=pcfg["size"], color=pcfg["color"], anchor=pcfg["anchor"],
+                  size=pcfg["size"], color=colors["price"], anchor=pcfg["anchor"],
                   arabic=pcfg["arabic"], max_width=pcfg.get("max_width"))
         c = config.CURRENCY
         draw_text(draw, data.get("currency", ""), x=c["x"], y=c["y"],
-                  font=c["font"], size=c["size"], color=c["color"],
+                  font=c["font"], size=c["size"], color=colors[c["color_key"]],
                   anchor=c["anchor"], arabic=c["arabic"], max_width=c["max_width"])
     else:
         draw_text(draw, config.PRICE_DEFAULT_TEXT, x=pcfg["x"], y=pcfg["y"],
                   font=config.PRICE_DEFAULT_FONT, size=config.PRICE_DEFAULT_SIZE,
-                  color=pcfg["color"], anchor="mm", arabic=True,
+                  color=colors["price"], anchor="mm", arabic=True,
                   max_width=config.PRICE_DEFAULT_MAX_W)
 
 
-def _draw_all_text(canvas: Image.Image, data: dict):
+def _draw_all_text(canvas: Image.Image, data: dict, theme: str):
     draw = ImageDraw.Draw(canvas)
+    colors = config.THEME_COLORS[theme]
 
     for key, cfg in config.TEXT.items():
         if key == "price":
             continue  # price + currency are handled together below
         draw_text(draw, data.get(key, ""), x=cfg["x"], y=cfg["y"],
-                  font=cfg["font"], size=cfg["size"], color=cfg["color"],
+                  font=cfg["font"], size=cfg["size"], color=colors[cfg["color_key"]],
                   anchor=cfg["anchor"], arabic=cfg["arabic"],
                   max_width=cfg.get("max_width"))
 
-    _draw_price_and_currency(draw, data)
+    _draw_price_and_currency(draw, data, colors)
 
     for spec_key, y in config.SPEC_ROWS.items():
         draw_text(draw, data.get(spec_key, ""), x=config.SPEC_VALUE_RIGHT_X, y=y,
                   font=config.SPEC_VALUE_FONT, size=config.SPEC_VALUE_SIZE,
-                  color=config.GOLD_VALUE, anchor="rm", arabic=True,
+                  color=colors["spec_value"], anchor="rm", arabic=True,
                   max_width=config.SPEC_VALUE_MAX_W)
 
 
@@ -133,9 +135,10 @@ def _draw_calibration(canvas: Image.Image):
 
 
 def generate(data: dict, image: Image.Image | None, crop: dict | None = None,
-             *, calibrate: bool = False) -> bytes:
-    _load_overlay()
-    hx, hy, hw, hh = _hole
+             *, theme: str = config.DEFAULT_THEME, calibrate: bool = False) -> bytes:
+    if theme not in config.THEME_COLORS:
+        theme = config.DEFAULT_THEME
+    overlay, (hx, hy, hw, hh) = _load_overlay(theme)
 
     canvas = Image.new("RGBA", (config.CANVAS, config.CANVAS), (*config.NAVY_BG, 255))
 
@@ -144,9 +147,9 @@ def generate(data: dict, image: Image.Image | None, crop: dict | None = None,
         car = _cover_resize(car, hw, hh)
         canvas.paste(car, (hx, hy))
 
-    canvas.alpha_composite(_overlay)
+    canvas.alpha_composite(overlay)
 
-    _draw_all_text(canvas, data)
+    _draw_all_text(canvas, data, theme)
 
     if calibrate:
         _draw_calibration(canvas)

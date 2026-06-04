@@ -20,8 +20,8 @@ app.add_middleware(
 
 
 @app.get("/api/health")
-def health():
-    return {"ok": True, "hole": generator.get_hole()}
+def health(theme: str = "dark"):
+    return {"ok": True, "hole": generator.get_hole(theme)}
 
 
 @app.post("/api/generate")
@@ -40,6 +40,7 @@ async def generate(
     currency: str = Form("دينار بحريني"),
     phone: str = Form(...),
     tagline: str = Form(""),
+    theme: str = Form("dark"),
     crop_x: float = Form(0),
     crop_y: float = Form(0),
     crop_width: float = Form(0),
@@ -59,14 +60,14 @@ async def generate(
         price=price, currency=currency, phone=phone,
     )
     crop = dict(x=crop_x, y=crop_y, width=crop_width, height=crop_height)
-    png = generator.generate(data, img, crop)
+    png = generator.generate(data, img, crop, theme=theme)
     return Response(content=png, media_type="image/png")
 
 
 @app.get("/api/test")
-def test(grid: int = 0):
+def test(grid: int = 0, theme: str = "dark"):
     """Calibration render: dummy data over a checkerboard 'car', optional grid."""
-    hx, hy, hw, hh = generator.get_hole()
+    hx, hy, hw, hh = generator.get_hole(theme)
     car = Image.new("RGB", (hw, hh), (60, 70, 85))
     # subtle checker so the car area is visible
     px = car.load()
@@ -76,5 +77,5 @@ def test(grid: int = 0):
                 px[xx, yy] = (74, 86, 104)
     png = generator.generate(config.TEST_DATA, car,
                              crop=dict(x=0, y=0, width=hw, height=hh),
-                             calibrate=bool(grid))
+                             theme=theme, calibrate=bool(grid))
     return Response(content=png, media_type="image/png")

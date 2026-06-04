@@ -117,6 +117,42 @@ body {
   border-color: #c8a84e;
 }
 
+/* Visual theme picker cards */
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(13, 27, 42, 0.7);
+  border: 2px solid rgba(200, 168, 78, 0.25);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.08s, box-shadow 0.15s;
+}
+.theme-card:hover {
+  border-color: rgba(200, 168, 78, 0.6);
+}
+.theme-card:active {
+  transform: translateY(1px);
+}
+.theme-card-active {
+  border-color: #c8a84e;
+  box-shadow: 0 0 0 3px rgba(200, 168, 78, 0.25);
+}
+.theme-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+.theme-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #dfe5ee;
+}
+
 /* react-easy-crop container needs explicit size */
 .crop-area {
   position: relative;

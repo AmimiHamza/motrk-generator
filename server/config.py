@@ -6,16 +6,45 @@ anchors (https://pillow.readthedocs.io/en/stable/handbook/text-anchors.html):
   "rm" = right / vertical-middle   (used for right-aligned RTL Arabic + RTL digits)
   "mm" = center / vertical-middle
 
-These were derived by analyzing model.png (overlay) and result.png (filled
-reference). Tweak with the /api/test calibration image until each value lands
-exactly in its slot.
+Two templates share this layout: `dark` and `light`. Positions/fonts are
+identical for both; only the overlay PNG and the text COLORS change (see
+THEME_COLORS). Tweak with the /api/test?theme=light calibration image until each
+value lands in its slot.
 """
 
 CANVAS = 1080
 GOLD = "#d8b54f"
 GOLD_VALUE = "#e3c25c"
 WHITE = "#ffffff"
+DARK_TEXT = "#15233c"  # dark navy, for text on the light background / contact band
 NAVY_BG = (10, 22, 40)
+
+DEFAULT_THEME = "dark"
+
+# Per-theme text colors, keyed by the `color_key` on each text element below.
+# The specs panel, price box and currency line sit on the SAME dark navy panel
+# in both themes, so spec_value / price / currency / phone don't change between
+# them — only the car name / year / tagline (which sit on the main background).
+THEME_COLORS = {
+    "dark": {
+        "car_name": WHITE,
+        "year": GOLD,
+        "tagline": WHITE,
+        "spec_value": GOLD_VALUE,
+        "price": GOLD,
+        "currency": WHITE,
+        "phone": DARK_TEXT,
+    },
+    "light": {
+        "car_name": DARK_TEXT,
+        "year": DARK_TEXT,
+        "tagline": DARK_TEXT,
+        "spec_value": GOLD_VALUE,
+        "price": GOLD,
+        "currency": WHITE,
+        "phone": DARK_TEXT,
+    },
+}
 
 # Font keys -> (file, variable-weight-name or None)
 FONTS = {
@@ -45,17 +74,17 @@ SPEC_ROWS = {
 }
 
 # Single-element text fields.
-# Each: (x, y, font_key, size, color, anchor, arabic, max_width)
+# Each: (x, y, font_key, size, color_key, anchor, arabic, max_width)
 TEXT = {
-    "car_name_en": dict(x=1030, y=112, font="mont-extra", size=56, color=WHITE,
+    "car_name_en": dict(x=1030, y=112, font="mont-extra", size=56, color_key="car_name",
                         anchor="rm", arabic=False, max_width=560),
-    "year": dict(x=861, y=185, font="mont-extra", size=58, color=GOLD,
+    "year": dict(x=861, y=185, font="mont-extra", size=58, color_key="year",
                  anchor="rm", arabic=False, max_width=180),
-    "tagline": dict(x=1028, y=270, font="taj-bold", size=32, color=WHITE,
+    "tagline": dict(x=1028, y=270, font="taj-bold", size=32, color_key="tagline",
                     anchor="rm", arabic=True, max_width=470),
-    "price": dict(x=190, y=838, font="taj-extra", size=52, color=GOLD,
+    "price": dict(x=190, y=838, font="taj-extra", size=52, color_key="price",
                   anchor="mm", arabic=False, max_width=290),
-    "phone": dict(x=602, y=882, font="taj-bold", size=46, color="#15233c",
+    "phone": dict(x=602, y=882, font="taj-bold", size=46, color_key="phone",
                   anchor="mm", arabic=False, max_width=320),
 }
 
@@ -66,12 +95,9 @@ PRICE_DEFAULT_FONT = "taj-bold"
 PRICE_DEFAULT_SIZE = 40
 PRICE_DEFAULT_MAX_W = 230
 
-# Currency line inside the price box. The template has "دينار بحريني" baked in,
-# so we paint CURRENCY_COVER with the box background to erase it, then draw the
-# chosen currency dynamically — and skip it entirely when the price is empty.
-PRICE_BOX_BG = (7, 23, 36)
-CURRENCY_COVER = (100, 850, 262, 886)  # (x0, y0, x1, y1) interior rect over baked text
-CURRENCY = dict(x=178, y=867, font="taj-bold", size=30, color=WHITE,
+# Currency line inside the price box (drawn dynamically; nothing is baked here).
+# Skipped entirely when the price is empty.
+CURRENCY = dict(x=178, y=867, font="taj-bold", size=30, color_key="currency",
                 anchor="mm", arabic=True, max_width=230)
 
 # Car hole is read from the overlay's alpha bbox at runtime; this is only a fallback.

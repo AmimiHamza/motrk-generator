@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ThemeSelector from "./ThemeSelector.jsx";
 
 const OTHER = "أخرى";
 
@@ -65,6 +66,7 @@ function buildState(initial = {}) {
   const colorOther = colorKnown ? "" : initial.color || "";
 
   return {
+    theme: initial.theme || "dark",
     carNameEn: initial.carNameEn || "",
     year: initial.year || DEFAULT_YEAR,
     brand,
@@ -140,6 +142,7 @@ export default function CarForm({ initial, onSubmit }) {
     }
 
     onSubmit({
+      theme: v.theme,
       carNameEn: v.carNameEn.trim(),
       year: v.year,
       model: v.year, // single model-year feeds both the photo year and المواصفات row
@@ -160,6 +163,11 @@ export default function CarForm({ initial, onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+      {/* Theme picker — first thing in the form */}
+      <ThemeSelector value={v.theme} onChange={(t) => set("theme", t)} />
+
+      <div className="border-t border-gold/15" />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* 1 — Car name (English, auto-uppercase) — full width */}
         <div className="sm:col-span-2" data-field="carNameEn">
