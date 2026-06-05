@@ -142,22 +142,14 @@ def _draw_all_text(canvas: Image.Image, data: dict, theme: str):
 
 
 def _restyle_footer(canvas: Image.Image, theme: str):
-    """Restyle the baked footer (client requests 7a/7b/7c): redraw the CTA line in
-    a stylish font, the contact phone bigger+bold, and both dividers gold. The
-    footer interior is a flat dark band, so covering + redrawing is seamless."""
+    """Redraw the baked footer's contact phone bigger + bold (7b). The footer
+    interior is a flat dark band, so covering + redrawing is seamless. The CTA line
+    (7a) and the divider (7c) are left as-is in the template."""
     draw = ImageDraw.Draw(canvas)
     bg = config.FOOTER_BG.get(theme, config.FOOTER_BG["dark"])
 
-    # cover the two static text bits with the footer background
     for cfg in config.FOOTER.values():
         draw.rectangle(cfg["cover"], fill=(*bg, 255))
-
-    # paint both vertical dividers gold (also restores any covered top edge)
-    y0, y1 = config.FOOTER_DIVIDER_Y
-    for x0, x1 in config.FOOTER_DIVIDERS:
-        draw.rectangle((x0, y0, x1, y1), fill=config.FOOTER_DIVIDER_COLOR)
-
-    # redraw the text
     for cfg in config.FOOTER.values():
         draw_text(draw, cfg["text"], x=cfg["x"], y=cfg["y"], font=cfg["font"],
                   size=cfg["size"], color=config.WHITE, anchor="mm",

@@ -112,19 +112,13 @@ CURRENCY = dict(x=178, y=866, font="taj-bold", size=26, color_key="currency",
 # Its interior is a uniform dark navy, so we cover the two static text bits and the
 # gray separator and redraw them with the styling the client asked for.
 FOOTER_BG = {"dark": (7, 23, 36), "light": (4, 4, 4)}  # footer interior per theme
+# Only 7b is applied in code: the contact phone is redrawn bigger + bold over the
+# baked footer. 7a (CTA font) and 7c (gold separator) were reverted — those are
+# kept as-is in the template and styled in Photoshop.
 FOOTER = {
-    # 7a: CTA line in a more stylish font (Cairo Bold).
-    "cta": dict(text="لعرض موترك عندي تواصل على", x=537, y=986, font="cairo-bold",
-                size=29, arabic=True, max_width=336, cover=(366, 963, 706, 1006)),
-    # 7b: contact phone, bigger + bold.
     "phone": dict(text="+973 3973 9784", x=580, y=1018, font="asst-extra",
                   size=27, arabic=False, max_width=236, cover=(480, 1004, 672, 1033)),
 }
-# 7c: both dividers painted gold (#c8a84e). The left one was already gold; the
-# right one (between the phone and مملكة البحرين) was gray.
-FOOTER_DIVIDERS = [(385, 387), (698, 700)]
-FOOTER_DIVIDER_Y = (1000, 1038)
-FOOTER_DIVIDER_COLOR = "#c8a84e"
 
 # Car hole is read from the overlay's alpha bbox at runtime; this is only a fallback.
 CAR_AREA_FALLBACK = dict(x=0, y=294, width=793, height=487)
