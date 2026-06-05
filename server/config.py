@@ -97,7 +97,7 @@ TEXT = {
 
 # Price box: when no price is entered, show this placeholder instead of a number.
 # It is longer than a price, so it auto-fits to a smaller size (see PRICE_DEFAULT_*).
-PRICE_DEFAULT_TEXT = "السعر بعد المعاينة"
+PRICE_DEFAULT_TEXT = "بعد المعاينة"
 PRICE_DEFAULT_FONT = "taj-bold"
 PRICE_DEFAULT_SIZE = 40
 PRICE_DEFAULT_MAX_W = 230
