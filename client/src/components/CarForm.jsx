@@ -41,11 +41,11 @@ const CATEGORIES = {
   "لامبورغيني": ["أوروس", "هوراكان", "أفنتادور", "ريفويلتو"],
 };
 
-const ENGINES = ["4 سلندر", "6 سلندر", "8 سلندر", "12 سلندر", "كهربائية"];
+const ENGINES = ["4 سلندر", "6 سلندر", "8 سلندر", "12 سلندر", "كهربائية", OTHER];
 const FUELS = ["بترول", "ديزل", "كهرباء", "هايبرد"];
 const TRANSMISSIONS = ["أوتوماتيك", "عادي"];
 const COLORS = ["أبيض", "أسود", "فضي", "رمادي", "أحمر", "أزرق", "أخضر", "أصفر", "برتقالي", "بني", "بيج", "ذهبي", OTHER];
-const CURRENCIES = ["دينار بحريني", "ريال سعودي", "درهم إماراتي", "دينار كويتي", "ريال عماني", "ريال قطري", "دولار أمريكي"];
+const CURRENCIES = ["دينار بحريني", "ريال سعودي", "درهم إماراتي", "دينار كويتي", "ريال عماني", "ريال قطري", "دولار أمريكي", OTHER];
 const DEFAULT_CURRENCY = "دينار بحريني";
 
 // Rebuild the raw editing state (dropdown choice + custom text) from a possibly
@@ -58,12 +58,34 @@ function buildState(initial = {}) {
   const catList = CATEGORIES[brand] || [];
   const catKnown = catList.includes(initial.category);
   const isBrandOther = brand === OTHER;
-  const category = initial.category ? (isBrandOther || !catKnown ? "" : initial.category) : "";
-  const categoryOther = isBrandOther || (initial.category && !catKnown) ? initial.category || "" : "";
+  // Category is a free-text "other" when the brand is other, OR when a known brand
+  // has a category that isn't one of its listed trims.
+  const category = !initial.category
+    ? ""
+    : isBrandOther
+    ? ""
+    : catKnown
+    ? initial.category
+    : OTHER;
+  const categoryOther = isBrandOther
+    ? initial.category || ""
+    : catKnown
+    ? ""
+    : initial.category || "";
+
+  const engineKnown = ENGINES.includes(initial.engine);
+  const engine = initial.engine ? (engineKnown ? initial.engine : OTHER) : "";
+  const engineOther = engineKnown ? "" : initial.engine || "";
 
   const colorKnown = COLORS.includes(initial.color);
   const color = initial.color ? (colorKnown ? initial.color : OTHER) : "";
   const colorOther = colorKnown ? "" : initial.color || "";
+
+  const curKnown = CURRENCIES.includes(initial.currency);
+  const currency = initial.currency
+    ? (curKnown ? initial.currency : OTHER)
+    : DEFAULT_CURRENCY;
+  const currencyOther = curKnown ? "" : initial.currency || "";
 
   return {
     theme: initial.theme || "dark",
@@ -73,13 +95,15 @@ function buildState(initial = {}) {
     brandOther,
     category,
     categoryOther,
-    engine: initial.engine || "",
+    engine,
+    engineOther,
     fuel: initial.fuel || "",
     transmission: initial.transmission || "",
     color,
     colorOther,
     price: initial.price || "",
-    currency: initial.currency || DEFAULT_CURRENCY,
+    currency,
+    currencyOther,
     phone: initial.phone || "",
     tagline: initial.tagline || "",
   };
@@ -90,7 +114,10 @@ export default function CarForm({ initial, onSubmit }) {
   const [touched, setTouched] = useState({});
 
   const isBrandOther = v.brand === OTHER;
+  const isCategoryOther = v.category === OTHER;
+  const isEngineOther = v.engine === OTHER;
   const isColorOther = v.color === OTHER;
+  const isCurrencyOther = v.currency === OTHER;
   const hasPrice = String(v.price || "").trim() !== "";
   const catList = CATEGORIES[v.brand] || [];
 
@@ -113,7 +140,9 @@ export default function CarForm({ initial, onSubmit }) {
       case "brand":
         return isBrandOther ? !v.brandOther.trim() : !v.brand;
       case "category":
-        return isBrandOther ? !v.categoryOther.trim() : !v.category;
+        return isBrandOther || isCategoryOther ? !v.categoryOther.trim() : !v.category;
+      case "engine":
+        return isEngineOther ? !v.engineOther.trim() : !v.engine;
       case "color":
         return isColorOther ? !v.colorOther.trim() : !v.color;
       default:
@@ -147,13 +176,13 @@ export default function CarForm({ initial, onSubmit }) {
       year: v.year,
       model: v.year, // single model-year feeds both the photo year and المواصفات row
       brand: isBrandOther ? v.brandOther.trim() : v.brand,
-      category: isBrandOther ? v.categoryOther.trim() : v.category,
-      engine: v.engine,
+      category: isBrandOther || isCategoryOther ? v.categoryOther.trim() : v.category,
+      engine: isEngineOther ? v.engineOther.trim() : v.engine,
       fuel: v.fuel,
       transmission: v.transmission,
       color: isColorOther ? v.colorOther.trim() : v.color,
       price: v.price.trim(),
-      currency: hasPrice ? v.currency : "",
+      currency: hasPrice ? (isCurrencyOther ? v.currencyOther.trim() : v.currency) : "",
       phone: v.phone.trim(),
       tagline: v.tagline.trim(),
     });
@@ -271,7 +300,19 @@ export default function CarForm({ initial, onSubmit }) {
               {catList.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
+              {v.brand && <option value={OTHER}>{OTHER}</option>}
             </select>
+          )}
+          {!isBrandOther && isCategoryOther && (
+            <input
+              type="text"
+              dir="rtl"
+              className={"field-input fade-slide mt-2 " + (invalid("category") ? "invalid" : "")}
+              placeholder="اكتب اسم الفئة"
+              value={v.categoryOther}
+              onChange={(e) => set("categoryOther", e.target.value)}
+              onBlur={() => touch("category")}
+            />
           )}
           {invalid("category") && <p className="field-error">{errMsg}</p>}
         </div>
@@ -294,6 +335,17 @@ export default function CarForm({ initial, onSubmit }) {
               <option key={o} value={o}>{o}</option>
             ))}
           </select>
+          {isEngineOther && (
+            <input
+              type="text"
+              dir="rtl"
+              className={"field-input fade-slide mt-2 " + (invalid("engine") ? "invalid" : "")}
+              placeholder="اكتب نوع المحرك"
+              value={v.engineOther}
+              onChange={(e) => set("engineOther", e.target.value)}
+              onBlur={() => touch("engine")}
+            />
+          )}
           {invalid("engine") && <p className="field-error">{errMsg}</p>}
         </div>
 
@@ -401,6 +453,16 @@ export default function CarForm({ initial, onSubmit }) {
                 <option key={o} value={o}>{o}</option>
               ))}
             </select>
+            {isCurrencyOther && (
+              <input
+                type="text"
+                dir="rtl"
+                className="field-input fade-slide mt-2"
+                placeholder="اكتب العملة"
+                value={v.currencyOther}
+                onChange={(e) => set("currencyOther", e.target.value)}
+              />
+            )}
           </div>
         )}
 
