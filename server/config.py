@@ -85,13 +85,13 @@ SPEC_ROWS = {
 TEXT = {
     "car_name_en": dict(x=1030, y=112, font="asst-extra", size=66, color_key="car_name",
                         anchor="rm", arabic=False, max_width=560),
-    "year": dict(x=861, y=188, font="asst-extra", size=70, color_key="year",
+    "year": dict(x=890, y=180, font="asst-extra", size=70, color_key="year",
                  anchor="rm", arabic=False, max_width=180),
     "tagline": dict(x=1028, y=284, font="taj-bold", size=32, color_key="tagline",
                     anchor="rm", arabic=True, max_width=470),
     "price": dict(x=190, y=830, font="taj-extra", size=56, color_key="price",
                   anchor="mm", arabic=False, max_width=290),
-    "phone": dict(x=560, y=882, font="taj-bold", size=46, color_key="phone",
+    "phone": dict(x=578, y=870, font="taj-bold", size=46, color_key="phone",
                   anchor="mm", arabic=False, max_width=300),
 }
 
@@ -107,18 +107,8 @@ PRICE_DEFAULT_MAX_W = 230
 CURRENCY = dict(x=178, y=866, font="taj-bold", size=26, color_key="currency",
                 anchor="mm", arabic=True, max_width=230)
 
-# ---- Footer restyle (drawn on top of the baked footer; template file unchanged) ----
-# The footer (CTA line, contact items, separators) is baked into the template PNG.
-# Its interior is a uniform dark navy, so we cover the two static text bits and the
-# gray separator and redraw them with the styling the client asked for.
-FOOTER_BG = {"dark": (7, 23, 36), "light": (4, 4, 4)}  # footer interior per theme
-# Only 7b is applied in code: the contact phone is redrawn bigger + bold over the
-# baked footer. 7a (CTA font) and 7c (gold separator) were reverted — those are
-# kept as-is in the template and styled in Photoshop.
-FOOTER = {
-    "phone": dict(text="+973 3973 9784", x=580, y=1018, font="asst-extra",
-                  size=27, arabic=False, max_width=236, cover=(480, 1004, 672, 1033)),
-}
+# The footer bar (CTA line, contact items, phone, separators) is fully baked into
+# the template PNG and is styled in Photoshop — the app does not touch it.
 
 # Car hole is read from the overlay's alpha bbox at runtime; this is only a fallback.
 CAR_AREA_FALLBACK = dict(x=0, y=294, width=793, height=487)

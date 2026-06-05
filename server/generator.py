@@ -141,21 +141,6 @@ def _draw_all_text(canvas: Image.Image, data: dict, theme: str):
                   max_width=spec_max_w, min_size=config.SPEC_VALUE_MIN_SIZE)
 
 
-def _restyle_footer(canvas: Image.Image, theme: str):
-    """Redraw the baked footer's contact phone bigger + bold (7b). The footer
-    interior is a flat dark band, so covering + redrawing is seamless. The CTA line
-    (7a) and the divider (7c) are left as-is in the template."""
-    draw = ImageDraw.Draw(canvas)
-    bg = config.FOOTER_BG.get(theme, config.FOOTER_BG["dark"])
-
-    for cfg in config.FOOTER.values():
-        draw.rectangle(cfg["cover"], fill=(*bg, 255))
-    for cfg in config.FOOTER.values():
-        draw_text(draw, cfg["text"], x=cfg["x"], y=cfg["y"], font=cfg["font"],
-                  size=cfg["size"], color=config.WHITE, anchor="mm",
-                  arabic=cfg["arabic"], max_width=cfg.get("max_width"))
-
-
 def _draw_calibration(canvas: Image.Image):
     """Overlay a coordinate grid + slot markers for tuning positions."""
     draw = ImageDraw.Draw(canvas, "RGBA")
@@ -191,7 +176,6 @@ def generate(data: dict, image: Image.Image | None, crop: dict | None = None,
     canvas.alpha_composite(overlay)
 
     _draw_all_text(canvas, data, theme)
-    _restyle_footer(canvas, theme)
 
     if calibrate:
         _draw_calibration(canvas)
