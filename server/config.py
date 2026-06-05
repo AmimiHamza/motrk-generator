@@ -56,11 +56,12 @@ FONTS = {
     "asst-bold": ("Assistant-Bold.ttf", None),
     "asst-extra": ("Assistant-ExtraBold.ttf", None),
     "asst-semibold": ("Assistant-SemiBold.ttf", None),
+    "cairo-bold": ("Cairo-VF.ttf", "Bold"),
 }
 
 SPEC_VALUE_FONT = "taj-bold"
-SPEC_VALUE_SIZE = 20       # default size; shrinks if a value is too wide
-SPEC_VALUE_MIN_SIZE = 16   # never smaller than this (then truncate with …)
+SPEC_VALUE_SIZE = 18       # medium; shrinks if a value is too wide
+SPEC_VALUE_MIN_SIZE = 15   # never smaller than this (then truncate with …)
 # The baked white labels are LEFT-aligned: every label's left edge sits at x~816
 # (their right edges vary only because the words differ in length). In RTL that
 # left edge is where each word "ends" (its last letter), so each gold value is
@@ -70,7 +71,7 @@ SPEC_VALUE_RIGHT_BOUND = 911  # don't run into the icons; max width = bound - le
 
 # value vertical center per spec row (left edge = SPEC_VALUE_LEFT_X, anchor "lm")
 SPEC_ROWS = {
-    "model": 405,
+    "model": 411,
     "brand": 457,
     "category": 510,
     "engine": 568,
@@ -82,16 +83,16 @@ SPEC_ROWS = {
 # Single-element text fields.
 # Each: (x, y, font_key, size, color_key, anchor, arabic, max_width)
 TEXT = {
-    "car_name_en": dict(x=1030, y=112, font="asst-extra", size=58, color_key="car_name",
+    "car_name_en": dict(x=1030, y=112, font="asst-extra", size=66, color_key="car_name",
                         anchor="rm", arabic=False, max_width=560),
-    "year": dict(x=861, y=185, font="asst-extra", size=60, color_key="year",
+    "year": dict(x=861, y=188, font="asst-extra", size=70, color_key="year",
                  anchor="rm", arabic=False, max_width=180),
-    "tagline": dict(x=1028, y=270, font="taj-bold", size=32, color_key="tagline",
+    "tagline": dict(x=1028, y=284, font="taj-bold", size=32, color_key="tagline",
                     anchor="rm", arabic=True, max_width=470),
-    "price": dict(x=190, y=838, font="taj-extra", size=52, color_key="price",
+    "price": dict(x=190, y=830, font="taj-extra", size=56, color_key="price",
                   anchor="mm", arabic=False, max_width=290),
-    "phone": dict(x=602, y=882, font="taj-bold", size=46, color_key="phone",
-                  anchor="mm", arabic=False, max_width=320),
+    "phone": dict(x=560, y=882, font="taj-bold", size=46, color_key="phone",
+                  anchor="mm", arabic=False, max_width=300),
 }
 
 # Price box: when no price is entered, show this placeholder instead of a number.
@@ -103,8 +104,27 @@ PRICE_DEFAULT_MAX_W = 230
 
 # Currency line inside the price box (drawn dynamically; nothing is baked here).
 # Skipped entirely when the price is empty.
-CURRENCY = dict(x=178, y=867, font="taj-bold", size=30, color_key="currency",
+CURRENCY = dict(x=178, y=866, font="taj-bold", size=26, color_key="currency",
                 anchor="mm", arabic=True, max_width=230)
+
+# ---- Footer restyle (drawn on top of the baked footer; template file unchanged) ----
+# The footer (CTA line, contact items, separators) is baked into the template PNG.
+# Its interior is a uniform dark navy, so we cover the two static text bits and the
+# gray separator and redraw them with the styling the client asked for.
+FOOTER_BG = {"dark": (7, 23, 36), "light": (4, 4, 4)}  # footer interior per theme
+FOOTER = {
+    # 7a: CTA line in a more stylish font (Cairo Bold).
+    "cta": dict(text="لعرض موترك عندي تواصل على", x=537, y=986, font="cairo-bold",
+                size=29, arabic=True, max_width=336, cover=(366, 963, 706, 1006)),
+    # 7b: contact phone, bigger + bold.
+    "phone": dict(text="+973 3973 9784", x=580, y=1018, font="asst-extra",
+                  size=27, arabic=False, max_width=236, cover=(480, 1004, 672, 1033)),
+}
+# 7c: both dividers painted gold (#c8a84e). The left one was already gold; the
+# right one (between the phone and مملكة البحرين) was gray.
+FOOTER_DIVIDERS = [(385, 387), (698, 700)]
+FOOTER_DIVIDER_Y = (1000, 1038)
+FOOTER_DIVIDER_COLOR = "#c8a84e"
 
 # Car hole is read from the overlay's alpha bbox at runtime; this is only a fallback.
 CAR_AREA_FALLBACK = dict(x=0, y=294, width=793, height=487)
