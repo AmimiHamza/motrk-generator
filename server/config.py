@@ -95,12 +95,14 @@ TEXT = {
                   anchor="mm", arabic=False, max_width=300),
 }
 
-# Price box: when no price is entered, show this placeholder instead of a number.
-# It is longer than a price, so it auto-fits to a smaller size (see PRICE_DEFAULT_*).
+# Price box: a non-numeric price (e.g. "بعد المعاينة", "عند التواصل" or any custom
+# text) — and the empty fallback — render as one centered Arabic line, smaller than
+# a number and auto-fit to the box, with no currency beneath it.
 PRICE_DEFAULT_TEXT = "بعد المعاينة"
 PRICE_DEFAULT_FONT = "taj-bold"
-PRICE_DEFAULT_SIZE = 40
-PRICE_DEFAULT_MAX_W = 230
+PRICE_DEFAULT_SIZE = 36
+PRICE_DEFAULT_MAX_W = 232
+PRICE_DEFAULT_Y = 848  # centered between the number line (830) and currency line (866)
 
 # Currency line inside the price box (drawn dynamically; nothing is baked here).
 # Skipped entirely when the price is empty.

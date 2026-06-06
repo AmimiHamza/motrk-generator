@@ -1,5 +1,6 @@
 """3-layer compositing: car photo -> template overlay -> dynamic text."""
 import io
+import re
 from pathlib import Path
 
 import numpy as np
@@ -90,13 +91,27 @@ def _format_phone(value) -> str:
     return " ".join(digits[i:i + 4] for i in range(0, len(digits), 4))
 
 
+_NUMERIC_PRICE = re.compile(r"^[\d\s.,]+$")
+
+
+def _draw_price_phrase(draw: ImageDraw.ImageDraw, text: str, colors: dict):
+    """One centered Arabic line in the price box (placeholder or text price)."""
+    draw_text(draw, text, x=config.TEXT["price"]["x"], y=config.PRICE_DEFAULT_Y,
+              font=config.PRICE_DEFAULT_FONT, size=config.PRICE_DEFAULT_SIZE,
+              color=colors["price"], anchor="mm", arabic=True,
+              max_width=config.PRICE_DEFAULT_MAX_W)
+
+
 def _draw_price_and_currency(draw: ImageDraw.ImageDraw, data: dict, colors: dict):
-    """Price + currency live in one box. With no price, show a longer placeholder
-    (auto-fit to a smaller size) and no currency line."""
+    """A numeric price shows the number + currency line. A non-numeric price
+    (بعد المعاينة / عند التواصل / custom) or an empty price shows a single smaller
+    Arabic phrase with no currency."""
     pcfg = config.TEXT["price"]
     price = str(data.get("price", "") or "").strip()
 
-    if price:
+    if not price:
+        _draw_price_phrase(draw, config.PRICE_DEFAULT_TEXT, colors)
+    elif _NUMERIC_PRICE.match(price):
         draw_text(draw, price, x=pcfg["x"], y=pcfg["y"], font=pcfg["font"],
                   size=pcfg["size"], color=colors["price"], anchor=pcfg["anchor"],
                   arabic=pcfg["arabic"], max_width=pcfg.get("max_width"))
@@ -105,10 +120,7 @@ def _draw_price_and_currency(draw: ImageDraw.ImageDraw, data: dict, colors: dict
                   font=c["font"], size=c["size"], color=colors[c["color_key"]],
                   anchor=c["anchor"], arabic=c["arabic"], max_width=c["max_width"])
     else:
-        draw_text(draw, config.PRICE_DEFAULT_TEXT, x=pcfg["x"], y=pcfg["y"],
-                  font=config.PRICE_DEFAULT_FONT, size=config.PRICE_DEFAULT_SIZE,
-                  color=colors["price"], anchor="mm", arabic=True,
-                  max_width=config.PRICE_DEFAULT_MAX_W)
+        _draw_price_phrase(draw, price, colors)
 
 
 def _draw_all_text(canvas: Image.Image, data: dict, theme: str):
