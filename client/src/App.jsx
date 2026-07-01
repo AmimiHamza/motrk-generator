@@ -68,6 +68,9 @@ export default function App() {
         throw new Error(msg.detail || `خطأ ${res.status}`);
       }
       const blob = await res.blob();
+      // Hold the "generating" state 5s longer after the image is ready,
+      // before revealing the download.
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       if (resultUrl) URL.revokeObjectURL(resultUrl);
       setResultUrl(URL.createObjectURL(blob));
       setStep(3);
